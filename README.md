@@ -4,7 +4,6 @@
 
 ### Find the shape in your data.
 
-Turn a spreadsheet into a sky you can explore.
 Discover patterns across your numeric features with interactive 3D clouds, PCA, and t-SNE.
 
 **[Open PCA Cloud →](https://archipelagoing.github.io/PCACloud/)**
@@ -13,20 +12,20 @@ No sign-up · No installation · Your data stays in your browser
 
 [![PCA Cloud site screenshot — open the interactive visualizer](docs/screenshot.png)](https://archipelagoing.github.io/PCACloud/)
 
-*Your rows become points. Your data becomes a landscape.*
+*if you look up at the sky, i wonder, can you find your data there?*
 
 </div>
 
-## A new perspective on your spreadsheet
+## Your spreadsheet, with its head in the clouds.⋆｡˚ ☁︎ ˚｡⋆
 
 A table gives you the numbers. PCA Cloud helps you explore how they fit together. Bring measurements from an experiment, a public dataset, or a CSV you've been curious about, and see their projected shape in three dimensions.
 
-- **Look for patterns worth investigating.** Explore groups, spread, and unusual points from different angles.
-- **Build intuition as you go.** Switch between PCA and t-SNE to see how different ways of simplifying the same data change the picture.
-- **Make the view your own.** Choose soft cloud particles or individual data points, adjust the atmosphere, and save an image for a slide, notebook, or conversation.
+- **Look for patterns worth investigating!** Explore groups, spread, and unusual points from different angles.
+- **Build intuition as you go...** Switch between PCA and t-SNE to see how different ways of simplifying the same data change the picture.
+- **Make the view your own** Choose soft cloud particles or individual data points, adjust the atmosphere, and save an image for a slide, notebook, or conversation.
 - **Keep your data on your device.** Uploaded CSVs are processed locally in your browser. No account or API key is needed.
 
-## Try it with a ready-made cloud
+## Try it today with a ready-made cloud! ⋆｡˚ ☁︎ ˚｡⋆
 
 **[Open the app](https://archipelagoing.github.io/PCACloud/)** and the built-in atmospheric sample is ready to explore. You don't need a dataset to get started.
 
@@ -37,7 +36,7 @@ A table gives you the numbers. PCA Cloud helps you explore how they fit together
 
 Use **Reset view** whenever you want to return to the starting camera position.
 
-## Bring your own data
+## Bring your own data 
 
 ### Drop in a CSV
 
@@ -83,11 +82,11 @@ CSV parsing and projection calculations happen on your device. The app does not 
 
 The page loads fonts from Google Fonts, with system-font fallbacks. If you use the Kaggle importer, your browser also contacts Kaggle and its download host. Each import requests the current file; datasets aren't refreshed in the background.
 
-**[Find the shape in your data →](https://archipelagoing.github.io/PCACloud/)**
+**[Find the shape in your data →](https://archipelagoing.github.io/PCACloud/)** ⋆｡˚ ☁︎ ˚｡⋆
 
 ---
 
-## For contributors
+## For contributors ⋆｡˚ ☁︎ ˚｡⋆
 
 Built with vanilla JavaScript and Canvas 2D, with no build step or runtime package dependencies. See the [roadmap](docs/todo.md) for fixes, release checks, and ideas for future features.
 
