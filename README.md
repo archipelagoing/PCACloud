@@ -2,7 +2,7 @@
 
 # PCA Cloud ☁️
 
-### Find the shape in your data.
+### Turn your data into a cloud you can explore.
 
 Discover patterns across your numeric features with interactive 3D clouds, PCA, and t-SNE.
 
@@ -36,7 +36,7 @@ A table gives you the numbers. PCA Cloud helps you explore how they fit together
 
 Use **Reset view** whenever you want to return to the starting camera position.
 
-## Bring your own data 
+## Bring your own data  ⋆｡˚ ☁︎ ˚｡⋆
 
 ### Drop in a CSV
 
@@ -50,7 +50,7 @@ Open **Import from Kaggle** and select **Try Iris dataset**, or paste a public d
 
 If Kaggle can't serve the file directly to your browser, download the CSV yourself and drop it into the app. Private datasets, competition authentication, and ZIP extraction aren't supported.
 
-## Two ways to see the same data
+## Two ways to see the same data ⋆｡˚ ☁︎ ˚｡⋆
 
 | Choose | When you want to… | What to look at |
 | --- | --- | --- |
@@ -76,7 +76,7 @@ See [Projection methods](docs/PROJECTIONS.md) for the mathematics, implementatio
 
 </details>
 
-## Your data stays with you
+## Your data stays with you ⋆｡˚ ☁︎ ˚｡⋆
 
 CSV parsing and projection calculations happen on your device. The app does not upload your dataset.
 
