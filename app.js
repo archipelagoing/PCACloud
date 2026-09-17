@@ -4,6 +4,7 @@ const $ = id => document.getElementById(id);
 const canvas = $('sky'), ctx = canvas.getContext('2d', { alpha: false });
 let dataset = sampleData(), points = [], width = 0, height = 0, yaw = -.22, pitch = -.12, zoom = 1, mode = 'cloud';
 let dragging = false, previous = null, lastTime = 0, density = .65, softness = .5;
+let projectionWorker = null, projectionRun = 0, displayedMethod = 'pca';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 $('rotate').checked = !reducedMotion;
 
@@ -20,17 +21,55 @@ function sprite(shade) {
 const lightSprite = sprite(false), shadowSprite = sprite(true);
 function analyze(candidate = dataset) {
   const result = pca(candidate.data, $('standardize').checked);
+  projectionWorker?.terminate();projectionWorker=null;const run=++projectionRun;
   dataset = candidate;
-  const extent = Math.max(...result.points.map(p => Math.hypot(...p))) || 1;
-  points = result.points.map((p, i) => ({ x: p[0]/extent, y: p[1]/extent, z: p[2]/extent, size: .75 + ((i*137)%100)/200 }));
+  const isTSNE=$('projection-method').value==='tsne';
+  $('pca-options').hidden=isTSNE;$('pca-metrics').hidden=isTSNE;
+  $('tsne-options').hidden=!isTSNE;$('tsne-metrics').hidden=!isTSNE;
+  $('projection-status').textContent='';
+  $('reconstruction-value').textContent=`${(result.reconstructionError*100).toFixed(2)}%`;
   $('dataset-info').textContent = `${dataset.data.length.toLocaleString()} rows · ${dataset.columns.length} numeric features`;
   $('total-variance').textContent = `${(result.variance.reduce((s,v) => s+v,0)*100).toFixed(1)}%`;
   result.variance.forEach((v,i) => { $(`pc-${i}`).textContent = `${(v*100).toFixed(1)}%`; $(`bar-${i}`).style.width = `${v*100}%`; });
   const notes = [];
   if (dataset.skipped) notes.push(`${dataset.skipped} incomplete or malformed rows skipped.`);
-  if (dataset.sampled) notes.push(`Evenly sampled ${dataset.sourceRows.toLocaleString()} rows to 2,500 before PCA.`);
-  if (dataset.columns.length === 2) notes.push('Two numeric features: PC3 is zero.');
+  if (dataset.sampled) notes.push(`Evenly sampled ${dataset.sourceRows.toLocaleString()} rows to 2,500 for analysis.`);
+  if (dataset.columns.length === 2 && !isTSNE) notes.push('Two numeric features: PC3 is zero.');
   message(notes.join(' '));
+  if(!isTSNE){setProjection(result.points,'pca');return;}
+  const count=Math.min(dataset.data.length,500);
+  const rows=Array.from({length:count},(_,i)=>dataset.data[Math.floor(i*dataset.data.length/count)]);
+  const perplexity=Math.max(1,Math.min(50,count-1,Number($('perplexity').value)||30));
+  $('perplexity').max=Math.min(50,count-1);$('perplexity').value=perplexity;
+  points=[];displayedMethod='tsne';document.querySelector('.coordinates').textContent='t-SNE 1 / 2 / 3';
+  $('tsne-kl').textContent='—';
+  const detail=`${count} of ${dataset.data.length} rows · perplexity ${perplexity}`;
+  $('projection-status').textContent=`Computing t-SNE · ${detail}…`;
+  const fail=error=>{
+    if(run!==projectionRun)return;
+    $('projection-method').value='pca';analyze();
+    $('projection-status').textContent=`t-SNE failed: ${error}. Showing PCA.`;
+  };
+  try {
+    projectionWorker=new Worker(new URL('./projection-worker.js',import.meta.url),{type:'module'});
+    projectionWorker.onmessage=({data})=>{
+      if(run!==projectionRun)return;
+      if(data.type==='progress')$('projection-status').textContent=`t-SNE ${data.iteration}/${data.iterations} · ${detail}`;
+      else if(data.type==='error')fail(data.message);
+      else if(data.type==='result'){
+        setProjection(data.result.points,'tsne');$('tsne-kl').textContent=data.result.kl.toFixed(4);
+        $('projection-status').textContent=`Finished 500 iterations · ${detail}.`;
+        projectionWorker.terminate();projectionWorker=null;
+      }
+    };
+    projectionWorker.onerror=()=>fail('background worker unavailable');
+    projectionWorker.postMessage({rows,options:{standardize:$('standardize').checked,perplexity}});
+  }catch(error){fail(error.message);}
+}
+function setProjection(projected,method){
+  const extent=Math.max(...projected.map(p=>Math.hypot(...p)))||1;
+  points=projected.map((p,i)=>({x:p[0]/extent,y:p[1]/extent,z:p[2]/extent,size:.75+((i*137)%100)/200}));
+  displayedMethod=method;document.querySelector('.coordinates').textContent=method==='pca'?'PC1 / PC2 / PC3':'t-SNE 1 / 2 / 3';
 }
 function message(text, error = false) { $('message').textContent = text; $('message').classList.toggle('error', error); }
 function resize() {
@@ -75,6 +114,7 @@ function render(time) {
     for(const p of projected) {ctx.globalAlpha=.55+(p.z+1)*.15;ctx.fillStyle='#f8fcff';ctx.beginPath();ctx.arc(p.x,p.y,Math.max(1,2*p.size*zoom),0,Math.PI*2);ctx.fill();}
     ctx.globalAlpha=.6;ctx.strokeStyle='#ffffff';ctx.lineWidth=1;ctx.font='9px sans-serif';
     [[1,0,0,'PC1'],[0,1,0,'PC2'],[0,0,1,'PC3']].forEach(([a,b,c,label])=>{
+      if(displayedMethod==='tsne')label=label.replace('PC','t-SNE ');
       const x=a*cy+c*sy,z=-a*sy+c*cy,y=b*cp-z*sp;
       ctx.beginPath();ctx.moveTo(centerX,centerY);ctx.lineTo(centerX+x*scale*.9,centerY-y*scale*.9);ctx.stroke();ctx.fillText(label,centerX+x*scale*.95,centerY-y*scale*.95);
     });
@@ -94,6 +134,13 @@ for(const name of ['density','softness']) {
   input.oninput=()=>{const v=Number(input.value);$(name+'-value').value=v+'%';input.style.background=`linear-gradient(to right,#809e9c ${(v-10)/90*100}%,#d9e2e3 ${(v-10)/90*100}%)`;if(name==='density')density=v/100;else softness=v/100;};input.oninput();
 }
 $('standardize').onchange=()=>{try {analyze();}catch(e){$('standardize').checked=!$('standardize').checked;message(e.message,true);}};
+$('projection-method').onchange=()=>analyze();
+$('pca-objective').onchange=()=>{
+  const reconstruction=$('pca-objective').value==='reconstruction';
+  $('reconstruction-metric').hidden=!reconstruction;
+  $('pca-metrics').classList.toggle('emphasize-reconstruction',reconstruction);
+};
+$('perplexity').onchange=()=>analyze();$('rerun-tsne').onclick=()=>analyze();
 async function importFile(file) {
   if(!file)return;
   if(file.size>5*1024*1024){message('Please choose a CSV smaller than 5 MB.',true);return;}

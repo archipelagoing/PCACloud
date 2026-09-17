@@ -29,7 +29,7 @@ export function parseCSV(text) {
   return { data, columns: columns.map(c => c.name), skipped: rows.length - valid.length, sampled: valid.length > count, sourceRows: valid.length };
 }
 
-export function pca(data, standardize = true) {
+export function prepareData(data, standardize = true) {
   const n = data.length, d = data[0]?.length;
   if (n < 2 || !d || data.some(row => row.length !== d || row.some(v => !Number.isFinite(v)))) throw new Error('PCA requires a finite rectangular matrix with at least two rows.');
   // Scaling all values first avoids overflow for very large CSV measurements.
@@ -39,6 +39,12 @@ export function pca(data, standardize = true) {
   const mean = Array.from({ length: d }, (_, j) => scaled.reduce((s, r) => s + r[j], 0) / n);
   const scales = mean.map((m, j) => standardize ? Math.sqrt(scaled.reduce((s, r) => s + (r[j] - m) ** 2, 0) / (n - 1)) || 1 : 1);
   const centered = scaled.map(r => r.map((v, j) => (v - mean[j]) / scales[j]));
+  return centered;
+}
+
+export function pca(data, standardize = true) {
+  const centered = prepareData(data, standardize);
+  const n = data.length, d = data[0].length;
   const a = Array.from({ length: d }, () => Array(d).fill(0));
   for (let j = 0; j < d; j++) for (let k = j; k < d; k++) a[j][k] = a[k][j] = centered.reduce((s, r) => s + r[j] * r[k], 0) / (n - 1);
   const total = a.reduce((s, r, j) => s + r[j], 0);
@@ -66,7 +72,8 @@ export function pca(data, standardize = true) {
   const variance = order.map(i => Math.max(0, a[i][i]) / total);
   const points = centered.map(row => components.map(v => row.reduce((s, x, j) => s + x*v[j], 0)));
   while (variance.length < 3) { variance.push(0); points.forEach(p => p.push(0)); }
-  return { points, variance, components };
+  const reconstructionError = Math.max(0, 1 - variance.reduce((s, v) => s + v, 0));
+  return { points, variance, components, reconstructionError };
 }
 
 export function sampleData() {

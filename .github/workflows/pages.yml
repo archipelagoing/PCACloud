@@ -25,7 +25,7 @@ jobs:
       - name: Package static site
         run: |
           mkdir -p _site
-          cp index.html style.css app.js pca.js kaggle.js cloud.png _site/
+          cp index.html style.css app.js pca.js kaggle.js tsne.js projection-worker.js cloud.png _site/
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v4
         with:

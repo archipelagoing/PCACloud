@@ -39,10 +39,19 @@
       </section>
       <section class="control-section">
         <div class="section-label"><span>02 / PROJECTION</span><span class="tiny">3 components</span></div>
+        <label class="projection-label" for="projection-method">Method</label>
+        <select id="projection-method" class="projection-select"><option value="pca">PCA · linear projection</option><option value="tsne">t-SNE · local neighborhoods</option></select>
+        <div id="pca-options"><label class="projection-label" for="pca-objective">PCA objective</label><select id="pca-objective" class="projection-select"><option value="variance">Maximize variance</option><option value="reconstruction">Minimize reconstruction error</option></select><p class="projection-note">Both objectives give the same PCA projection. Choose which metric to emphasize.</p></div>
+        <div id="tsne-options" hidden><label class="projection-label" for="perplexity">Perplexity</label><input id="perplexity" class="projection-select" type="number" min="1" max="50" value="30" step="1"><p class="projection-note">Balances smaller and larger neighborhoods. Uses up to 500 evenly sampled rows and a fixed seed.</p><button id="rerun-tsne" class="text-button">Run again ↻</button></div>
         <label class="toggle-row" for="standardize"><span>Standardize features<small>Give every variable equal weight</small></span><input type="checkbox" id="standardize" checked><span class="switch"></span></label>
+        <div id="pca-metrics">
         <div class="variance-title"><span>Explained variance</span><strong id="total-variance">—</strong></div>
         <div class="variance-bar" aria-label="Explained variance by component"><i id="bar-0"></i><i id="bar-1"></i><i id="bar-2"></i></div>
         <div class="variance-legend"><span><i></i>PC1 <b id="pc-0">—</b></span><span><i></i>PC2 <b id="pc-1">—</b></span><span><i></i>PC3 <b id="pc-2">—</b></span></div>
+        <div id="reconstruction-metric" hidden><div class="variance-title"><span>Relative squared error</span><strong id="reconstruction-value">—</strong></div><p class="projection-note">Fraction of centered data energy lost in 3D; lower is better. Measured after optional standardization.</p></div>
+        </div>
+        <div id="tsne-metrics" hidden><div class="variance-title"><span>KL divergence</span><strong id="tsne-kl">—</strong></div><p class="projection-note">Preserves local similarities, not global distances or variance. Axes have no feature meaning.</p></div>
+        <p id="projection-status" class="projection-note" role="status" aria-live="polite"></p>
       </section>
       <section class="control-section appearance">
         <div class="section-label"><span>03 / ATMOSPHERE</span><span>☼</span></div>
