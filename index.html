@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6395b8">
   <title>PCA Cloud — Find the shape in your data</title>
-  <link rel="icon" type="image/png" href="cloud.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="assets/cloud.png">
+  <link rel="stylesheet" href="styles/style.css">
 </head>
 <body>
   <canvas id="sky" aria-label="Interactive three-dimensional PCA cloud. Drag to rotate and scroll to zoom."></canvas>
@@ -68,6 +68,6 @@
   </main>
   <footer><span>A different way to see the bigger picture.</span><button id="about">How it works <span>↗</span></button><span class="coordinates">PC1 / PC2 / PC3</span></footer>
   <dialog id="about-dialog"><button id="close-about" aria-label="Close explanation">×</button><div class="eyebrow">FROM NUMBERS TO NEBULOUS</div><h2>Your data has a shape.</h2><p>Principal component analysis (PCA) finds the directions in which your data varies most. We center your numeric columns, optionally scale them to equal variance, and project each row onto the first three principal components.</p><p>Each row becomes a soft particle in the cloud. Switch to <strong>Data points</strong> to see the exact projected positions. Density and particle size change the rendering, not the PCA results.</p><p>The explained variance tells you how much of the original variation these three dimensions preserve. Non-numeric columns are excluded; rows with missing numeric values are skipped. Large datasets are evenly sampled to 2,500 rows before PCA.</p><p class="dialog-note">The sample is synthetic atmospheric data, created to demonstrate correlated measurements. The cloud is an artistic rendering, not a weather simulation.</p></dialog>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="src/app.js"></script>
 </body>
 </html>

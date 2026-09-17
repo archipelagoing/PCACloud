@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pca, parseCSV, sampleData } from './pca.js';
+import { pca, parseCSV, sampleData } from '../src/pca.js';
 
 test('perfectly correlated data lies on one principal component', () => {
   const result = pca([[1,2,3],[2,4,6],[3,6,9],[4,8,12]]);

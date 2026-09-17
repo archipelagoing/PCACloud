@@ -11,7 +11,7 @@ Discover patterns across your numeric features with interactive 3D clouds, PCA, 
 
 No sign-up · No installation · Your data stays in your browser
 
-[![PCA Cloud site screenshot — open the interactive visualizer](screenshot.png)](https://archipelagoing.github.io/PCACloud/)
+[![PCA Cloud site screenshot — open the interactive visualizer](docs/screenshot.png)](https://archipelagoing.github.io/PCACloud/)
 
 *Your rows become points. Your data becomes a landscape.*
 
@@ -73,7 +73,7 @@ These views help you ask questions about your data. A visible group alone doesn'
 - With two numeric features, PCA produces a flat projection. Constant data produces a validation message.
 - The sample is synthetic atmospheric data. The cloud is an artistic rendering, not a weather simulation.
 
-See [Projection methods](PROJECTIONS.md) for the mathematics, implementation details, and interpretation limits.
+See [Projection methods](docs/PROJECTIONS.md) for the mathematics, implementation details, and interpretation limits.
 
 </details>
 
@@ -89,7 +89,26 @@ The page loads fonts from Google Fonts, with system-font fallbacks. If you use t
 
 ## For contributors
 
-Built with vanilla JavaScript and Canvas 2D, with no build step or runtime package dependencies. See the [roadmap](todo.md) for fixes, release checks, and ideas for future features.
+Built with vanilla JavaScript and Canvas 2D, with no build step or runtime package dependencies. See the [roadmap](docs/todo.md) for fixes, release checks, and ideas for future features.
+
+<details>
+<summary><strong>Project structure</strong></summary>
+
+```text
+PCACloud/
+├── index.html       # Site entry point
+├── src/             # App, projections, Kaggle import, and worker
+├── styles/          # Site stylesheet
+├── assets/          # Site images and favicon
+├── tests/           # Automated tests
+├── docs/            # Projection guide, roadmap, and screenshot
+├── .github/         # GitHub Pages deployment workflow
+├── package.json     # Local server and test commands
+├── README.md
+└── LICENSE
+```
+
+</details>
 
 <details>
 <summary><strong>Run locally, test, and deploy</strong></summary>

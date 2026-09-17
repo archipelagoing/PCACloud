@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {affinities,objective,tsne} from './tsne.js';
-import {pca,prepareData} from './pca.js';
+import {affinities,objective,tsne} from '../src/tsne.js';
+import {pca,prepareData} from '../src/pca.js';
 
 test('PCA residual energy matches explicit reconstruction error',()=>{
   const rows=Array.from({length:30},(_,i)=>[Math.sin(i),Math.cos(i),i%5,i%7]);

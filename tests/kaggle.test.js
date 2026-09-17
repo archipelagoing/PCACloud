@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { datasetRef, listCSVFiles, downloadCSV, MAX_BYTES } from './kaggle.js';
+import { datasetRef, listCSVFiles, downloadCSV, MAX_BYTES } from '../src/kaggle.js';
 
 test('dataset references accept Kaggle links and reject other hosts or paths',()=>{
   for(const value of ['uciml/iris','https://www.kaggle.com/datasets/uciml/iris?select=Iris.csv','kaggle.com/datasets/uciml/iris/']) assert.equal(datasetRef(value),'uciml/iris');

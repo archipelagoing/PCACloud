@@ -4,7 +4,7 @@ Based on the current working tree. Unchecked verification items mean “confirm 
 
 ## Release checks
 
-- [ ] Confirm GitHub Pages uses **GitHub Actions** as its deployment source, following [README.md](README.md#github-pages). Repository settings and deployment status have not been verified here.
+- [ ] Confirm GitHub Pages uses **GitHub Actions** as its deployment source, following [README.md](../README.md#deploy-to-github-pages). Repository settings and deployment status have not been verified here.
 - [ ] Run `npm test` before publishing the current changes and confirm the Pages workflow succeeds.
 - [ ] Smoke-test the deployed `/PCACloud/` site: sample data, CSV upload, PCA/t-SNE switching, worker loading, controls, and PNG export. Confirm the favicon and other assets load.
 - [ ] Test the live Kaggle importer from the deployed site, including **Try Iris dataset**. Existing tests mock network responses; they do not verify Kaggle's browser access or redirects.
