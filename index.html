@@ -22,6 +22,17 @@
         <div class="section-label"><span>01 / YOUR DATA</span><button id="sample" class="text-button">Use sample ↗</button></div>
         <label class="upload" id="dropzone" for="file"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg><strong>Bring your own data</strong><span>Drop a CSV here or <u>browse files</u></span><small>Numeric columns · up to 5 MB</small></label>
         <input type="file" id="file" accept=".csv,text/csv" hidden>
+        <details class="kaggle-import">
+          <summary>Import from Kaggle <span>↗</span></summary>
+          <form id="kaggle-form">
+            <label for="kaggle-url">Public dataset link</label>
+            <input id="kaggle-url" type="text" placeholder="kaggle.com/datasets/owner/name" required>
+            <div class="kaggle-actions"><button type="submit" id="kaggle-find">Find CSVs</button><button type="button" id="kaggle-demo">Try Iris dataset</button></div>
+          </form>
+          <div id="kaggle-files" hidden><label for="kaggle-file">CSV file · up to 5 MB</label><select id="kaggle-file"></select><button type="button" id="kaggle-load">Visualize dataset</button></div>
+          <p id="kaggle-status" role="status" aria-live="polite">Load public CSVs directly from Kaggle. No API key needed.</p>
+          <a id="kaggle-source" hidden target="_blank" rel="noopener noreferrer">View source on Kaggle ↗</a>
+        </details>
         <div class="dataset"><span class="file-icon">▤</span><div><strong id="dataset-name">Atmospheric observations</strong><small id="dataset-info">Preparing your sky…</small></div><span class="loaded-dot"></span></div>
         <p id="message" role="status" aria-live="polite"></p>
       </section>

@@ -26,9 +26,17 @@ Open http://localhost:5173. Requires Python 3 to serve the static files. Any sta
 - Switch between shaded cloud particles and exact data points. Adjust particle size and opacity independently of the analysis.
 - Save the current sky as a PNG.
 
+## Kaggle datasets
+
+Expand **Import from Kaggle**, paste a public dataset link (or `owner/dataset-name`), and choose **Find CSVs**. Select a file and click **Visualize dataset**. **Try Iris dataset** loads `uciml/iris/Iris.csv` in one click. Each import requests the current file from Kaggle; datasets are not periodically refreshed in the background.
+
+Downloads go directly from Kaggle to the visitor's browser without API keys or a backend. CSV files are limited to 5 MB, and PCA runs locally. Availability depends on Kaggle's browser access, rate limits, and dataset permissions. Private datasets, competition authentication, and ZIP extraction are not supported; download and unzip those files yourself, then use the existing CSV upload. Errors leave the previous visualization intact. The source link credits the dataset on Kaggle.
+
+All numeric columns are included, including numeric identifiers such as Iris's `Id` column. Remove unwanted identifier columns before uploading if you want them excluded from PCA.
+
 CSV data is processed entirely in the browser. Text columns are excluded, incomplete rows are skipped, and datasets exceeding 2,500 valid rows are evenly sampled before analysis. Limits: 5 MB per file, 100 columns. Two-feature data is rendered in a plane. Constant data produces a validation message. PCA uses a symmetric covariance matrix and cyclic Jacobi eigendecomposition. Cloud appearance is artistic, not a physical weather simulation.
 
-Google Fonts is the only external request; system fonts work offline. The visualization does not upload data or require API keys.
+Google Fonts loads the fonts; system fonts work offline. Using the Kaggle importer also contacts Kaggle and its download host. The visualization does not upload data or require API keys.
 
 ## Verify
 
@@ -37,3 +45,6 @@ npm test
 ```
 
 Uses Node's built-in test runner to check eigenvalues, orthogonal components, scale invariance, CSV parsing, and input validation.
+--
+For Tyler
+--

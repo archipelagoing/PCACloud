@@ -1,4 +1,5 @@
 import { pca, parseCSV, sampleData } from './pca.js';
+import { datasetRef, listCSVFiles, downloadCSV } from './kaggle.js';
 const $ = id => document.getElementById(id);
 const canvas = $('sky'), ctx = canvas.getContext('2d', { alpha: false });
 let dataset = sampleData(), points = [], width = 0, height = 0, yaw = -.22, pitch = -.12, zoom = 1, mode = 'cloud';
@@ -110,4 +111,34 @@ $('sample').onclick=()=>{analyze(sampleData());$('dataset-name').textContent='At
 $('export').onclick=()=>{canvas.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='pca-cloud.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});};
 $('about').onclick=()=>$('about-dialog').showModal();$('close-about').onclick=()=>$('about-dialog').close();
 $('about-dialog').addEventListener('click',e=>{if(e.target===$('about-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
+let kaggleRef = '', kaggleRequest = 0, dataRequest = 0;
+function kaggleStatus(text) { $('kaggle-status').textContent = text; }
+function kaggleBusy(busy) { for (const id of ['kaggle-find','kaggle-demo','kaggle-load']) $(id).disabled = busy; }
+$('kaggle-url').addEventListener('input',()=>{kaggleRequest++;kaggleRef='';$('kaggle-files').hidden=true;kaggleBusy(false);});
+$('kaggle-form').onsubmit=async e=>{
+  e.preventDefault();const request=++kaggleRequest;
+  $('kaggle-files').hidden=true;kaggleBusy(true);kaggleStatus('Finding CSV files…');
+  try {
+    const ref=datasetRef($('kaggle-url').value),files=await listCSVFiles(ref);
+    if(request!==kaggleRequest)return;
+    if(!files.length)throw new Error('No CSV files under 5 MB found. Download a smaller CSV and upload it here.');
+    kaggleRef=ref;$('kaggle-file').replaceChildren(...files.map(name=>new Option(name,name)));
+    $('kaggle-files').hidden=false;kaggleStatus('Choose a CSV to turn into a cloud.');
+  } catch(error) {if(request===kaggleRequest)kaggleStatus(error.message);}
+  finally {if(request===kaggleRequest)kaggleBusy(false);}
+};
+async function loadKaggle(ref, filename) {
+  const request=++kaggleRequest, selection=++dataRequest;kaggleBusy(true);kaggleStatus('Downloading from Kaggle…');
+  try {
+    const text=await downloadCSV(ref,filename);
+    if(request!==kaggleRequest||selection!==dataRequest)return;
+    analyze(parseCSV(text));$('dataset-name').textContent=filename;
+    $('kaggle-source').href=`https://www.kaggle.com/datasets/${ref}`;$('kaggle-source').hidden=false;
+    kaggleStatus('Loaded from Kaggle. PCA runs locally in your browser.');
+  } catch(error) {if(request===kaggleRequest)kaggleStatus(error.message);}
+  finally {if(request===kaggleRequest)kaggleBusy(false);}
+}
+$('kaggle-load').onclick=()=>loadKaggle(kaggleRef,$('kaggle-file').value);
+$('kaggle-demo').onclick=()=>{$('kaggle-url').value='https://www.kaggle.com/datasets/uciml/iris';$('kaggle-files').hidden=true;loadKaggle('uciml/iris','Iris.csv');};
+for(const id of ['sample','file','dropzone']) $(id).addEventListener(id==='file'?'change':id==='dropzone'?'drop':'click',()=>{dataRequest++;$('kaggle-source').hidden=true;},true);
 window.addEventListener('resize',resize);analyze();resize();requestAnimationFrame(render);
