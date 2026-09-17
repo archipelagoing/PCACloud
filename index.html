@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#6395b8">
+  <title>PCA Cloud — Find the shape in your data</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="sky" aria-label="Interactive three-dimensional PCA cloud. Drag to rotate and scroll to zoom."></canvas>
+  <header>
+    <a class="brand" href="./" aria-label="PCA Cloud home"><svg viewBox="0 0 40 28" fill="none"><path d="M10 24a8 8 0 0 1-1-16 11 11 0 0 1 21 2 7 7 0 0 1 0 14Z" stroke="currentColor" stroke-width="1.7"/><path d="M13 17h14M17 12v10M23 14v8" stroke="currentColor" stroke-width="1.3"/></svg>PCA<span>Cloud</span></a>
+    <div class="header-note"><span class="live-dot"></span>A little perspective changes everything.</div>
+    <button id="export" class="glass-button">Save image <span>↗</span></button>
+  </header>
+  <main>
+    <section class="intro"><div class="eyebrow">DATA, WITH ROOM TO BREATHE</div><h1>Find the shape<br>in your data.</h1><p>Many dimensions. One sky.<br>Explore your data through principal component analysis.</p></section>
+    <aside class="panel" aria-label="Cloud controls">
+      <div class="panel-heading"><span>Cloud studio</span><span class="pill">LOCAL & PRIVATE</span></div>
+      <section class="control-section">
+        <div class="section-label"><span>01 / YOUR DATA</span><button id="sample" class="text-button">Use sample ↗</button></div>
+        <label class="upload" id="dropzone" for="file"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg><strong>Bring your own data</strong><span>Drop a CSV here or <u>browse files</u></span><small>Numeric columns · up to 5 MB</small></label>
+        <input type="file" id="file" accept=".csv,text/csv" hidden>
+        <div class="dataset"><span class="file-icon">▤</span><div><strong id="dataset-name">Atmospheric observations</strong><small id="dataset-info">Preparing your sky…</small></div><span class="loaded-dot"></span></div>
+        <p id="message" role="status" aria-live="polite"></p>
+      </section>
+      <section class="control-section">
+        <div class="section-label"><span>02 / PROJECTION</span><span class="tiny">3 components</span></div>
+        <label class="toggle-row" for="standardize"><span>Standardize features<small>Give every variable equal weight</small></span><input type="checkbox" id="standardize" checked><span class="switch"></span></label>
+        <div class="variance-title"><span>Explained variance</span><strong id="total-variance">—</strong></div>
+        <div class="variance-bar" aria-label="Explained variance by component"><i id="bar-0"></i><i id="bar-1"></i><i id="bar-2"></i></div>
+        <div class="variance-legend"><span><i></i>PC1 <b id="pc-0">—</b></span><span><i></i>PC2 <b id="pc-1">—</b></span><span><i></i>PC3 <b id="pc-2">—</b></span></div>
+      </section>
+      <section class="control-section appearance">
+        <div class="section-label"><span>03 / ATMOSPHERE</span><span>☼</span></div>
+        <div class="segmented" aria-label="Render mode"><button id="cloud-mode" class="active" aria-pressed="true">Cloud</button><button id="point-mode" aria-pressed="false">Data points</button></div>
+        <label class="slider-label" for="density">Cloud density<output id="density-value">65%</output></label><input id="density" type="range" min="10" max="100" value="65">
+        <label class="slider-label" for="softness">Particle size<output id="softness-value">50%</output></label><input id="softness" type="range" min="10" max="100" value="50">
+        <div class="motion-row"><label for="rotate"><input id="rotate" type="checkbox" checked>Slow rotation</label><button id="reset" class="text-button">Reset view ↺</button></div>
+      </section>
+      <div class="panel-footer"><span>⌁</span> Your data stays in your browser.</div>
+    </aside>
+    <div class="cloud-caption"><span class="caption-line"></span><span>EVERY POINT, A PART OF THE PICTURE</span></div>
+    <div class="view-tools"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="Zoom in">+</button></div>
+    <div class="interaction-hint"><span>↔</span> Drag to orbit <i>·</i> Scroll to explore</div>
+  </main>
+  <footer><span>A different way to see the bigger picture.</span><button id="about">How it works <span>↗</span></button><span class="coordinates">PC1 / PC2 / PC3</span></footer>
+  <dialog id="about-dialog"><button id="close-about" aria-label="Close explanation">×</button><div class="eyebrow">FROM NUMBERS TO NEBULOUS</div><h2>Your data has a shape.</h2><p>Principal component analysis (PCA) finds the directions in which your data varies most. We center your numeric columns, optionally scale them to equal variance, and project each row onto the first three principal components.</p><p>Each row becomes a soft particle in the cloud. Switch to <strong>Data points</strong> to see the exact projected positions. Density and particle size change the rendering, not the PCA results.</p><p>The explained variance tells you how much of the original variation these three dimensions preserve. Non-numeric columns are excluded; rows with missing numeric values are skipped. Large datasets are evenly sampled to 2,500 rows before PCA.</p><p class="dialog-note">The sample is synthetic atmospheric data, created to demonstrate correlated measurements. The cloud is an artistic rendering, not a weather simulation.</p></dialog>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
