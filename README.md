@@ -2,7 +2,7 @@
 
 # PCA Cloud ☁️
 
-### Turn your data into a cloud you can explore.
+### Turn your spreadsheet into clouds!
 
 Discover patterns across your numeric features with interactive 3D clouds, PCA, and t-SNE.
 
