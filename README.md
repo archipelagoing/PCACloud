@@ -1,4 +1,4 @@
-# PCA Cloud
+# PCA Cloud ☁️
 
 A browser-based PCA visualizer that turns rows of data into a softly illuminated, three-dimensional cloud in the sky. Built with vanilla JavaScript and Canvas 2D, without a build step.
 
