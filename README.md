@@ -36,7 +36,7 @@ A table gives you the numbers. PCA Cloud helps you explore how they fit together
 
 Use **Reset view** whenever you want to return to the starting camera position.
 
-In PCA mode, select **Understand this cloud** to explore the full scree plot, cumulative explained variance, and feature weights for each displayed component. The learning panel also walks through a four-point example: change the second feature’s units, toggle standardization, and see how PC1 and reconstruction change. Select **View these four points as a cloud** to explore that example in the main scene; **Use sample** restores the atmospheric data.
+Select the **Learn PCA** tab on the right edge to slide out the learning drawer while keeping the sky interactive. **Variance** shows the complete scree plot; **Loadings** connects feature weights to a highlighted PCA axis. **Walkthrough** guides you through six steps using the assignment’s four-point example: change units, toggle standardization, orbit the scene, and click A–D to inspect a point. The main visualization highlights centering, component directions, projections, and reconstruction loss for the active step. Select **Studio** or press Escape to return to your dataset. Opening Learn PCA switches a t-SNE view to PCA.
 
 ## Bring your own data  ⋆｡˚ ☁︎ ˚｡⋆
 

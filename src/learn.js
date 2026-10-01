@@ -2,6 +2,49 @@ const $ = id => document.getElementById(id);
 const percent = value => `${(value * 100).toFixed(2)}%`;
 const format = value => Math.abs(value) < 1e-9 ? '0' : value.toFixed(3);
 const basePoints = [[1, 3], [3, 1], [5, 3], [7, 5]];
+const stepNames = ['Center', 'Covariance', 'Directions', 'Variance', 'Project', 'Reconstruct'];
+const learning = { open: false, topic: 'variance', step: 0, selected: 3, component: 0 };
+let onSceneChange = () => {};
+let currentLesson;
+let datasetSummary = '';
+
+export function lessonGeometry(result, step) {
+  const original = result.data.map(row => row.map((value, j) => value / result.scales[j]));
+  const visible = step === 0 ? [...original, ...result.centered] : result.centered;
+  const extent = Math.max(...visible.map(row => Math.hypot(...row))) || 1;
+  const normalize = row => [row[0] / extent, row[1] / extent, 0];
+  return { points: result.centered.map(normalize), original: original.map(normalize),
+    reconstructed: result.reconstructed.map(normalize),
+    mean: normalize(result.mean.map((value, j) => value / result.scales[j])),
+    axes: [result.direction, [-result.direction[1], result.direction[0]]].map(normalize), extent };
+}
+
+function notifyScene() {
+  $('learn-dataset').textContent = learning.topic === 'walkthrough'
+    ? `Four-point lesson · 4 rows · population covariance · ${$('lesson-standardize').checked ? 'standardized' : 'centered'}`
+    : datasetSummary;
+  const hints = {
+    variance: 'The three PCA axes are highlighted in the sky. Drag to orbit and scroll to zoom.',
+    loadings: `PC${learning.component + 1} is highlighted in the sky. Select another component to connect its feature weights to its axis.`,
+    walkthrough: [
+      'Center: outlined points show the original measurements. Arrows move them to their centered positions around zero.',
+      'Covariance: the feature axes are highlighted. Inspect A–D to see how the two measurements vary together.',
+      'Directions: PC1 and PC2 are drawn in the original feature plane. PC1 follows the greatest spread.',
+      'Variance: PC1 is emphasized. Change units or standardization to see its direction and retained variance change.',
+      'Project: the selected point connects to its coordinate on PC1. Click another point to inspect its projection.',
+      'Reconstruct: outlined points are recovered from PC1. Dashed lines show the information lost for all four points.'
+    ][learning.step]
+  };
+  $('learning-scene-hint').textContent = hints[learning.topic];
+  onSceneChange({ ...learning, lesson: currentLesson,
+    geometry: currentLesson ? lessonGeometry(currentLesson, learning.step) : null });
+}
+
+export function selectLessonPoint(index) {
+  learning.selected = index;
+  $('lesson-point').value = String(index);
+  lesson();
+}
 
 export function fourPointAnalysis(multiplier = 1, standardize = false) {
   const data = basePoints.map(([x, y]) => [x, y * multiplier]);
@@ -95,6 +138,7 @@ function loadings(result, columns, index) {
 function lesson() {
   const multiplier = Number($('lesson-scale').value), standardized = $('lesson-standardize').checked;
   const result = fourPointAnalysis(multiplier, standardized);
+  currentLesson = result;
   $('lesson-scale-value').value = `×${multiplier}`;
   const svg = svgChart('Four centered points, their PC1 reconstructions, and discarded distances', 620, 285);
   const extent = Math.max(...result.centered.flat().map(Math.abs)) * 1.25;
@@ -116,37 +160,89 @@ function lesson() {
   element(svg, 'text', { x: 310, y: 277, 'text-anchor': 'middle' }, 'Both axes use the same scale; dashed lines show loss from keeping only PC1.');
   $('lesson-chart').replaceChildren(svg);
   const [[a, b], [, d]] = result.covariance;
+  const selected = learning.selected, pointName = 'ABCD'[selected];
   const lines = [
     `1. Center: mean = (${format(result.mean[0])}, ${format(result.mean[1])}).${standardized ? ` Divide by population standard deviations (${format(result.scales[0])}, ${format(result.scales[1])}).` : ''}`,
-    `2. Covariance: Σ = X̃ᵀX̃ / 4 = [[${format(a)}, ${format(b)}], [${format(b)}, ${format(d)}]].`,
+    `2. Covariance: Σ = X̃ᵀX̃ / 4 = [[${format(a)}, ${format(b)}], [${format(b)}, ${format(d)}]]. Point ${pointName} contributes ${format(result.centered[selected][0] * result.centered[selected][1] / 4)} to the cross-covariance.`,
     `3. Eigenvalues: λ₁ = ${format(result.eigenvalues[0])}; λ₂ = ${format(result.eigenvalues[1])}. Unit PC1 = (${format(vx)}, ${format(vy)}).`,
     `4. Retained variance: PC1 = ${percent(result.variance[0])}; PC2 = ${percent(result.variance[1])}.`,
-    `5. Project D: (${format(result.centered[3][0])}, ${format(result.centered[3][1])}) · (${format(vx)}, ${format(vy)}) = ${format(result.scores[3])}.`,
-    `6. Reconstruct D from PC1: (${result.reconstructed[3].map(format).join(', ')}). Relative squared error over all four points: ${percent(result.variance[1])}.`
+    `5. Project ${pointName}: (${result.centered[selected].map(format).join(', ')}) · (${format(vx)}, ${format(vy)}) = ${format(result.scores[selected])}.`,
+    `6. Reconstruct ${pointName} from PC1: (${result.reconstructed[selected].map(format).join(', ')}). Relative squared error over all four points: ${percent(result.variance[1])}.`
   ];
-  $('lesson-calculation').replaceChildren(...lines.map(line => { const p = document.createElement('p'); p.textContent = line; return p; }));
+  const p = document.createElement('p'); p.textContent = lines[learning.step];
+  $('lesson-calculation').replaceChildren(p);
+  $('lesson-progress').textContent = `${learning.step + 1} / ${stepNames.length}`;
+  $('lesson-previous').disabled = learning.step === 0;
+  $('lesson-next').disabled = learning.step === stepNames.length - 1;
+  [...$('lesson-steps').children].forEach((button, i) => button.setAttribute('aria-current', i === learning.step ? 'step' : 'false'));
+  notifyScene();
 }
 
-export function setupLearning(onExample) {
-  $('learn').onclick = () => { $('learn-dialog').showModal(); };
-  $('close-learn').onclick = () => $('learn-dialog').close();
+export function setupLearning(onChange) {
+  onSceneChange = onChange;
+  const setOpen = open => {
+    learning.open = open;
+    document.body.classList.toggle('learning-open', open);
+    $('learn-drawer').inert = !open;
+    $('studio-panel').inert = open;
+    $('learn').setAttribute('aria-expanded', String(open));
+    $('studio-tab').setAttribute('aria-pressed', String(!open));
+    $('studio-tab').classList.toggle('active', !open);
+    $('learn').classList.toggle('active', open);
+    if (!open) $('learn').focus();
+    notifyScene();
+  };
+  $('learn').onclick = () => setOpen(!learning.open);
+  $('studio-tab').onclick = () => setOpen(false);
+  $('close-learn').onclick = () => setOpen(false);
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && learning.open && !document.querySelector('dialog[open]')) setOpen(false);
+  });
+  const topics = ['variance', 'loadings', 'walkthrough'];
+  const selectTopic = topic => {
+    learning.topic = topic;
+    for (const name of topics) {
+      const selected = name === topic;
+      $(`topic-${name}`).setAttribute('aria-selected', String(selected));
+      $(`topic-${name}`).tabIndex = selected ? 0 : -1;
+      $(`learning-${name}`).hidden = !selected;
+    }
+    notifyScene();
+  };
+  topics.forEach((topic, i) => {
+    $(`topic-${topic}`).onclick = () => selectTopic(topic);
+    $(`topic-${topic}`).onkeydown = event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (i + (event.key === 'ArrowRight' ? 1 : 2)) % 3;
+      selectTopic(topics[next]); $(`topic-${topics[next]}`).focus();
+    };
+  });
+  $('lesson-steps').replaceChildren(...stepNames.map((name, i) => {
+    const button = document.createElement('button'); button.textContent = `${i + 1}. ${name}`;
+    button.onclick = () => { learning.step = i; lesson(); }; return button;
+  }));
+  $('lesson-previous').onclick = () => { learning.step = Math.max(0, learning.step - 1); lesson(); };
+  $('lesson-next').onclick = () => { learning.step = Math.min(stepNames.length - 1, learning.step + 1); lesson(); };
+  $('lesson-point').onchange = () => selectLessonPoint(Number($('lesson-point').value));
   $('lesson-scale').oninput = lesson;
   $('lesson-standardize').onchange = lesson;
-  $('lesson-cloud').onclick = () => {
-    const result = fourPointAnalysis(Number($('lesson-scale').value), $('lesson-standardize').checked);
-    onExample({ data: result.data, columns: ['x₁', 'x₂'], skipped: 0, sampled: false }, $('lesson-standardize').checked);
-    $('learn-dialog').close();
-  };
   lesson();
 }
 
 export function updateLearning(result, dataset, standardized) {
-  $('learn-dataset').textContent = `${$('dataset-name').textContent} · ${dataset.data.length.toLocaleString()} analyzed rows · ${dataset.columns.length} features · ${standardized ? 'standardized' : 'centered, without standardization'}`;
+  datasetSummary = `${$('dataset-name').textContent} · ${dataset.data.length.toLocaleString()} analyzed rows · ${dataset.columns.length} features · ${standardized ? 'standardized' : 'centered, without standardization'}`;
   scree(result.spectrum);
   const selector = $('loading-component');
   const index = Math.min(Number(selector.value) || 0, result.components.length - 1);
   selector.replaceChildren(...result.components.map((_, i) => new Option(`PC${i + 1}`, i)));
   selector.value = index;
-  selector.onchange = () => loadings(result, dataset.columns, Number(selector.value));
+  learning.component = index;
+  selector.onchange = () => {
+    learning.component = Number(selector.value);
+    loadings(result, dataset.columns, learning.component);
+    notifyScene();
+  };
   loadings(result, dataset.columns, index);
+  notifyScene();
 }

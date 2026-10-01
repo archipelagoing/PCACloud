@@ -1,12 +1,13 @@
 import { pca, parseCSV, sampleData } from './pca.js';
 import { datasetRef, listCSVFiles, downloadCSV } from './kaggle.js';
-import { setupLearning, updateLearning } from './learn.js';
+import { setupLearning, updateLearning, selectLessonPoint } from './learn.js';
 const $ = id => document.getElementById(id);
 const canvas = $('sky'), ctx = canvas.getContext('2d', { alpha: false });
 let dataset = sampleData(), points = [], width = 0, height = 0, yaw = -.22, pitch = -.12, zoom = 1, mode = 'cloud';
 let dragging = false, previous = null, lastTime = 0, density = .65, softness = .5;
 let projectionWorker = null, projectionRun = 0, displayedMethod = 'pca';
 let currentPCA = null;
+let learningState = { open: false }, lessonHits = [], savedCamera = null, pointerStart = null;
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 $('rotate').checked = !reducedMotion;
 
@@ -94,18 +95,24 @@ function background() {
 }
 function render(time) {
   const dt = Math.min((time-lastTime)/1000 || 0,.05);lastTime=time;
-  if ($('rotate').checked && !dragging && !document.hidden) yaw += dt*.035;
+  if ($('rotate').checked && !learningState.open && !dragging && !document.hidden) yaw += dt*.035;
   background();
   const mobile = width<=640;
-  const centerX=mobile?width*.5:(width-340)*.5, centerY=mobile?405:height*.57;
-  const scale=(mobile?width*.54:Math.min((width-340)*.52,height*.49))*zoom;
+  const drawerWidth = learningState.open ? Math.min(440, width * .48) + 42 : 340;
+  const sceneWidth = width - drawerWidth;
+  const centerX=mobile?width*.5:sceneWidth*.5, centerY=mobile?(learningState.open?height*.24:405):height*.57;
+  const scale=(mobile?(learningState.open?Math.min(width*.42,height*.19):width*.54):Math.min(sceneWidth*.44,height*.42))*zoom;
   const cy=Math.cos(yaw), sy=Math.sin(yaw), cp=Math.cos(pitch), sp=Math.sin(pitch);
-  const projected=points.map(p=>{
+  const toScreen = p => {
     const x=p.x*cy+p.z*sy,z=-p.x*sy+p.z*cy,y=p.y*cp-z*sp,depth=p.y*sp+z*cp;
     const perspective=3/(3-depth);
-    return {x:centerX+x*scale*perspective,y:centerY-y*scale*perspective,z:depth,size:p.size*perspective,light:y};
-  }).sort((a,b)=>a.z-b.z);
-  if(mode==='cloud') {
+    return {...p,x:centerX+x*scale*perspective,y:centerY-y*scale*perspective,z:depth,size:(p.size || 1)*perspective,light:y};
+  };
+  const walkthrough = learningState.open && learningState.topic === 'walkthrough';
+  const activePoints = walkthrough ? learningState.geometry.points.map(([x,y,z],index)=>({x,y,z,index,size:2})) : points;
+  const projected=activePoints.map((p,index)=>toScreen({...p,index})).sort((a,b)=>a.z-b.z);
+  lessonHits = walkthrough ? projected : [];
+  if(mode==='cloud' && !learningState.open) {
     const radius=scale*(.07+softness*.15)*Math.pow(1600/Math.max(points.length,30),.16);
     for(const p of projected) {
       const r=radius*p.size;
@@ -115,20 +122,74 @@ function render(time) {
       ctx.drawImage(lightSprite,p.x-r*1.05,p.y-r,r*2,r*1.8);
     }
   } else {
-    for(const p of projected) {ctx.globalAlpha=.55+(p.z+1)*.15;ctx.fillStyle='#f8fcff';ctx.beginPath();ctx.arc(p.x,p.y,Math.max(1,2*p.size*zoom),0,Math.PI*2);ctx.fill();}
+    for(const p of projected) {
+      const selected = walkthrough && p.index === learningState.selected;
+      ctx.globalAlpha=walkthrough?1:.65;
+      ctx.fillStyle=selected?'#ffe4a0':'#f8fcff';
+      ctx.beginPath();ctx.arc(p.x,p.y,selected?7:Math.max(2,2*p.size*zoom),0,Math.PI*2);ctx.fill();
+      if(walkthrough){ctx.font='600 13px sans-serif';ctx.fillText('ABCD'[p.index],p.x+11,p.y-9);}
+    }
     ctx.globalAlpha=.6;ctx.strokeStyle='#ffffff';ctx.lineWidth=1;ctx.font='9px sans-serif';
-    [[1,0,0,'PC1'],[0,1,0,'PC2'],[0,0,1,'PC3']].forEach(([a,b,c,label])=>{
+    if(!walkthrough) [[1,0,0,'PC1'],[0,1,0,'PC2'],[0,0,1,'PC3']].forEach(([a,b,c,label],index)=>{
       if(displayedMethod==='tsne')label=label.replace('PC','t-SNE ');
-      const x=a*cy+c*sy,z=-a*sy+c*cy,y=b*cp-z*sp;
-      ctx.beginPath();ctx.moveTo(centerX,centerY);ctx.lineTo(centerX+x*scale*.9,centerY-y*scale*.9);ctx.stroke();ctx.fillText(label,centerX+x*scale*.95,centerY-y*scale*.95);
+      const highlight=learningState.open && (learningState.topic==='variance'||index===learningState.component);
+      ctx.globalAlpha=highlight?1:.45;ctx.strokeStyle=highlight?'#ffe4a0':'#fff';ctx.fillStyle=ctx.strokeStyle;ctx.lineWidth=highlight?3:1;
+      const end=toScreen({x:a*.9,y:b*.9,z:c*.9});
+      ctx.beginPath();ctx.moveTo(centerX,centerY);ctx.lineTo(end.x,end.y);ctx.stroke();ctx.fillText(label,end.x+5,end.y-5);
     });
+  }
+  if(walkthrough) {
+    const {geometry,lesson,step,selected}=learningState;
+    const screen = row => toScreen({x:row[0],y:row[1],z:row[2]||0});
+    const line = (a,b,color,dashed=false,width=1.5) => {
+      ctx.globalAlpha=1;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dashed?[5,5]:[]);
+      const start=screen(a),end=screen(b);ctx.beginPath();ctx.moveTo(start.x,start.y);ctx.lineTo(end.x,end.y);ctx.stroke();ctx.setLineDash([]);
+      return [start,end];
+    };
+    const outline = (row,label) => {
+      const p=screen(row);ctx.strokeStyle='#ffe4a0';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.stroke();
+      if(label){ctx.fillStyle='#fff';ctx.font='11px sans-serif';ctx.fillText(label,p.x+9,p.y+15);}
+    };
+    // These are feature-space axes, not the PCA score axes of the normal cloud.
+    [[.9,0,0,'x₁'],[0,.9,0,'x₂']].forEach(([x,y,z,label])=>{
+      const [,end]=line([0,0,0],[x,y,z],step<2?'#ffe4a0':'#ffffff60');
+      ctx.fillStyle='#fff';ctx.font='12px sans-serif';ctx.fillText(label,end.x+6,end.y-5);
+    });
+    if(step===0) {
+      geometry.original.forEach((row,i)=>{
+        const [start,end]=line(row,geometry.points[i],'#ffe4a0',true);
+        const angle=Math.atan2(end.y-start.y,end.x-start.x);
+        ctx.beginPath();ctx.moveTo(end.x,end.y);ctx.lineTo(end.x-8*Math.cos(angle-.4),end.y-8*Math.sin(angle-.4));ctx.moveTo(end.x,end.y);ctx.lineTo(end.x-8*Math.cos(angle+.4),end.y-8*Math.sin(angle+.4));ctx.stroke();
+        outline(row,`${'ABCD'[i]} original`);
+      });
+      outline(geometry.mean,'mean');outline([0,0,0],'zero');
+    }
+    if(step>=2) {
+      const [vx,vy]=lesson.direction;
+      [[vx,vy,'PC1'],[-vy,vx,'PC2']].forEach(([x,y,label],i)=>{
+        const [,end]=line([-.85*x,-.85*y,0],[.85*x,.85*y,0],i===0?'#ffe4a0':'#ffffff70',false,i===0?3:1.5);
+        ctx.fillStyle=i===0?'#ffe4a0':'#fff';ctx.font='600 13px sans-serif';ctx.fillText(label,end.x+8,end.y-5);
+      });
+    }
+    if(step>=4) {
+      const indices=step===5?[0,1,2,3]:[selected];
+      indices.forEach(i=>{line(geometry.points[i],geometry.reconstructed[i],i===selected?'#ffe4a0':'#ffffffaa',true);outline(geometry.reconstructed[i],`${'ABCD'[i]} on PC1`);});
+    }
+    ctx.fillStyle='#f8fcff';ctx.font='12px sans-serif';ctx.globalAlpha=1;
+    const caption=mobile?`${step + 1}. ${['Center','Covariance','Directions','Variance','Project','Reconstruct'][step]} · drag to orbit`:`${['Center the measurements','Measure covariance','Find component directions','Compare retained variance','Project onto PC1','Reconstruct from PC1'][step]} · drag to orbit`;
+    ctx.fillText(caption,24,mobile?height*.5-62:height-76);
   }
   ctx.globalAlpha=1; requestAnimationFrame(render);
 }
 function setZoom(value) {zoom=Math.max(.4,Math.min(2.5,value));$('zoom-value').textContent=`${Math.round(zoom*100)}%`;}
-canvas.addEventListener('pointerdown',e=>{dragging=true;previous=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointerdown',e=>{dragging=true;previous=[e.clientX,e.clientY];pointerStart=previous;canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{if(!dragging)return;yaw+=(e.clientX-previous[0])*.006;pitch=Math.max(-1.3,Math.min(1.3,pitch+(e.clientY-previous[1])*.006));previous=[e.clientX,e.clientY];});
 for(const event of ['pointerup','pointercancel','lostpointercapture']) canvas.addEventListener(event,()=>{dragging=false;});
+canvas.addEventListener('pointerup',e=>{
+  if(!pointerStart||Math.hypot(e.clientX-pointerStart[0],e.clientY-pointerStart[1])>6)return;
+  const point=lessonHits.filter(p=>Math.hypot(e.clientX-p.x,e.clientY-p.y)<18).sort((a,b)=>Math.hypot(e.clientX-a.x,e.clientY-a.y)-Math.hypot(e.clientX-b.x,e.clientY-b.y))[0];
+  if(point)selectLessonPoint(point.index);
+});
 canvas.addEventListener('wheel',e=>{e.preventDefault();setZoom(zoom*Math.exp(-e.deltaY*.001));},{passive:false});
 $('zoom-in').onclick=()=>setZoom(zoom+.1);$('zoom-out').onclick=()=>setZoom(zoom-.1);
 $('reset').onclick=()=>{yaw=-.22;pitch=-.12;setZoom(1);};
@@ -192,15 +253,15 @@ async function loadKaggle(ref, filename) {
 $('kaggle-load').onclick=()=>loadKaggle(kaggleRef,$('kaggle-file').value);
 $('kaggle-demo').onclick=()=>{$('kaggle-url').value='https://www.kaggle.com/datasets/uciml/iris';$('kaggle-files').hidden=true;loadKaggle('uciml/iris','Iris.csv');};
 for(const id of ['sample','file','dropzone']) $(id).addEventListener(id==='file'?'change':id==='dropzone'?'drop':'click',()=>{dataRequest++;$('kaggle-source').hidden=true;},true);
-setupLearning((example, standardized) => {
-  dataRequest++;
-  $('kaggle-source').hidden = true;
-  $('projection-method').value = 'pca';
-  $('standardize').checked = standardized;
-  $('dataset-name').textContent = 'Four points · Assignment 2';
-  analyze(example);
-  $('point-mode').click();
-  $('reset').click();
+setupLearning(state => {
+  const wasWalkthrough=learningState.open&&learningState.topic==='walkthrough';
+  const isWalkthrough=state.open&&state.topic==='walkthrough';
+  if(isWalkthrough&&!wasWalkthrough){savedCamera={yaw,pitch,zoom};yaw=0;pitch=0;setZoom(1);}
+  if(wasWalkthrough&&!isWalkthrough&&savedCamera){({yaw,pitch}=savedCamera);setZoom(savedCamera.zoom);savedCamera=null;}
+  learningState=state;
+  document.querySelector('.coordinates').textContent=isWalkthrough?'x₁ / x₂ · FOUR-POINT LESSON':displayedMethod==='pca'?'PC1 / PC2 / PC3':'t-SNE 1 / 2 / 3';
+  canvas.setAttribute('aria-label',isWalkthrough?'Interactive four-point PCA walkthrough. Drag to rotate, scroll to zoom, or click a labeled point to inspect it.':`Interactive three-dimensional ${displayedMethod==='pca'?'PCA':'t-SNE'} cloud. Drag to rotate and scroll to zoom.`);
+  if(state.open&&$('projection-method').value==='tsne'){$('projection-method').value='pca';analyze();}
 });
 $('learn').addEventListener('click', () => updateLearning(currentPCA, dataset, $('standardize').checked));
 window.addEventListener('resize',resize);analyze();resize();requestAnimationFrame(render);
