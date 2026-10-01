@@ -43,11 +43,12 @@
         <select id="projection-method" class="projection-select"><option value="pca">PCA · linear projection</option><option value="tsne">t-SNE · local neighborhoods</option></select>
         <div id="pca-options"><label class="projection-label" for="pca-objective">PCA objective</label><select id="pca-objective" class="projection-select"><option value="variance">Maximize variance</option><option value="reconstruction">Minimize reconstruction error</option></select><p class="projection-note">Both objectives give the same PCA projection. Choose which metric to emphasize.</p></div>
         <div id="tsne-options" hidden><label class="projection-label" for="perplexity">Perplexity</label><input id="perplexity" class="projection-select" type="number" min="1" max="50" value="30" step="1"><p class="projection-note">Balances smaller and larger neighborhoods. Uses up to 500 evenly sampled rows and a fixed seed.</p><button id="rerun-tsne" class="text-button">Run again ↻</button></div>
-        <label class="toggle-row" for="standardize"><span>Standardize features<small>Give every variable equal weight</small></span><input type="checkbox" id="standardize" checked><span class="switch"></span></label>
+        <label class="toggle-row" for="standardize"><span>Standardize features<small>Scale nonconstant features to unit variance</small></span><input type="checkbox" id="standardize" checked><span class="switch"></span></label>
         <div id="pca-metrics">
         <div class="variance-title"><span>Explained variance</span><strong id="total-variance">—</strong></div>
         <div class="variance-bar" aria-label="Explained variance by component"><i id="bar-0"></i><i id="bar-1"></i><i id="bar-2"></i></div>
         <div class="variance-legend"><span><i></i>PC1 <b id="pc-0">—</b></span><span><i></i>PC2 <b id="pc-1">—</b></span><span><i></i>PC3 <b id="pc-2">—</b></span></div>
+        <button id="learn" class="learn-button">Understand this cloud <span>↗</span></button>
         <div id="reconstruction-metric" hidden><div class="variance-title"><span>Relative squared error</span><strong id="reconstruction-value">—</strong></div><p class="projection-note">Fraction of centered data energy lost in 3D; lower is better. Measured after optional standardization.</p></div>
         </div>
         <div id="tsne-metrics" hidden><div class="variance-title"><span>KL divergence</span><strong id="tsne-kl">—</strong></div><p class="projection-note">Preserves local similarities, not global distances or variance. Axes have no feature meaning.</p></div>
@@ -68,6 +69,43 @@
   </main>
   <footer><span>A different way to see the bigger picture.</span><button id="about">How it works <span>↗</span></button><span class="coordinates">PC1 / PC2 / PC3</span></footer>
   <dialog id="about-dialog"><button id="close-about" aria-label="Close explanation">×</button><div class="eyebrow">FROM NUMBERS TO NEBULOUS</div><h2>Your data has a shape.</h2><p>Principal component analysis (PCA) finds the directions in which your data varies most. We center your numeric columns, optionally scale them to equal variance, and project each row onto the first three principal components.</p><p>Each row becomes a soft particle in the cloud. Switch to <strong>Data points</strong> to see the exact projected positions. Density and particle size change the rendering, not the PCA results.</p><p>The explained variance tells you how much of the original variation these three dimensions preserve. Non-numeric columns are excluded; rows with missing numeric values are skipped. Large datasets are evenly sampled to 2,500 rows before PCA.</p><p class="dialog-note">The sample is synthetic atmospheric data, created to demonstrate correlated measurements. The cloud is an artistic rendering, not a weather simulation.</p></dialog>
+  <dialog id="learn-dialog" aria-labelledby="learn-title">
+    <button id="close-learn" class="close-dialog" aria-label="Close PCA learning panel">×</button>
+    <div class="eyebrow">LOOK INSIDE THE CLOUD</div>
+    <h2 id="learn-title">A little math. A clearer picture.</h2>
+    <p id="learn-dataset" class="learn-subtitle"></p>
+    <section class="learn-section">
+      <h3>How much survives in three dimensions?</h3>
+      <p>Each bar is a component’s share of total variance. The line adds those shares together. The first three bars are the dimensions of your cloud.</p>
+      <div id="scree-chart"></div>
+      <p class="chart-key"><span>▥ Individual variance</span><span>― Cumulative variance</span><span>┄ 90% / 95%</span></p>
+      <p id="scree-summary" class="math-insight"></p>
+      <details><summary>The math behind the plot</summary><p class="math-formula">EVRⱼ = λⱼ / Σ λℓ</p><p>λⱼ is the variance along component j, ordered from largest to smallest. Retained variance is the sum of the retained components’ ratios.</p><p class="math-formula">Z = X̃Vₖ &nbsp; · &nbsp; X̂ = ZVₖᵀ<br>‖X̃ − X̂‖² / ‖X̃‖² = 1 − Σⱼ₌₁ᵏ EVRⱼ</p><p>X̃ is centered data, optionally standardized. Vₖ contains k orthonormal component directions. PCA maximizes retained variance and minimizes squared reconstruction error with the same projection. Error is measured in the preprocessed space.</p></details>
+    </section>
+    <section class="learn-section">
+      <h3>Which measurements shape the cloud?</h3>
+      <label class="projection-label" for="loading-component">Principal component</label>
+      <select id="loading-component" class="projection-select"></select>
+      <p>Loadings are the weights used to combine your features. The three largest absolute weights are highlighted; positive and negative weights point in opposite directions.</p>
+      <div id="loading-chart"></div>
+      <p class="math-formula">zᵢⱼ = Σℓ x̃ᵢℓ vℓⱼ</p>
+      <p>A point’s component coordinate is a weighted sum of its centered, optionally standardized measurements. Flipping all weights and scores for a component mirrors the axis without changing the PCA solution. These weights describe the projection, not causal importance.</p>
+    </section>
+    <section class="learn-section">
+      <h3>Try it with four points.</h3>
+      <p>From Assignment 2, Part 1.1: A = (1, 3), B = (3, 1), C = (5, 3), D = (7, 5). Change the units of the second feature and watch PC1 rotate.</p>
+      <label class="slider-label" for="lesson-scale">Multiply feature x₂ <output id="lesson-scale-value">×1</output></label>
+      <input id="lesson-scale" type="range" min="1" max="10" value="1" step="1">
+      <label class="lesson-toggle"><input id="lesson-standardize" type="checkbox"> Standardize this example</label>
+      <div id="lesson-chart"></div>
+      <p class="chart-key">● Centered points &nbsp; ○ Reconstructed from PC1 &nbsp; ― PC1 &nbsp; ┄ Discarded distance</p>
+      <div id="lesson-calculation" aria-live="polite"></div>
+      <p class="math-insight">PCA follows variance, so changing units can change its answer. Standardizing removes that dependence on units. It is a modeling choice: shared scales and meaningful low variance may justify leaving it off.</p>
+      <details><summary>Why the covariance convention matters</summary><p>This lesson uses population covariance and population standard deviations, dividing by n = 4, to match the assignment. The main cloud uses sample covariance and sample standard deviations, dividing by n − 1. With consistent preprocessing, component directions and explained-variance ratios agree; eigenvalues and standardized scores depend on the convention.</p><p>For numerical stability, unstandardized cloud inputs are also divided by one shared scale. This preserves directions and variance ratios. Display coordinates are uniformly resized to fit the scene; the lesson reports its own calculation units.</p></details>
+      <button id="lesson-cloud" class="learn-button">View these four points as a cloud <span>↗</span></button>
+    </section>
+    <p class="dialog-note">Variance measures information retained in this representation. It does not guarantee that groups or classes remain distinguishable. Soft particles and cloud density are visual effects, not statistical density estimates.</p>
+  </dialog>
   <script type="module" src="src/app.js"></script>
 </body>
 </html>

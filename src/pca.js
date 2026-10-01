@@ -67,13 +67,16 @@ export function pca(data, standardize = true) {
     }
     if (largest < total * 1e-11) break;
   }
-  const order = Array.from({ length: d }, (_, i) => i).sort((i, j) => a[j][j] - a[i][i]).slice(0, 3);
+  const fullOrder = Array.from({ length: d }, (_, i) => i).sort((i, j) => a[j][j] - a[i][i]);
+  const eigenvalues = fullOrder.map(i => Math.max(0, a[i][i]));
+  const spectrum = eigenvalues.map(value => value / total);
+  const order = fullOrder.slice(0, 3);
   const components = order.map(i => vectors.map(r => r[i]));
   const variance = order.map(i => Math.max(0, a[i][i]) / total);
   const points = centered.map(row => components.map(v => row.reduce((s, x, j) => s + x*v[j], 0)));
   while (variance.length < 3) { variance.push(0); points.forEach(p => p.push(0)); }
   const reconstructionError = Math.max(0, 1 - variance.reduce((s, v) => s + v, 0));
-  return { points, variance, components, reconstructionError };
+  return { points, variance, components, reconstructionError, spectrum, eigenvalues };
 }
 
 export function sampleData() {

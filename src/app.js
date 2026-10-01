@@ -1,10 +1,12 @@
 import { pca, parseCSV, sampleData } from './pca.js';
 import { datasetRef, listCSVFiles, downloadCSV } from './kaggle.js';
+import { setupLearning, updateLearning } from './learn.js';
 const $ = id => document.getElementById(id);
 const canvas = $('sky'), ctx = canvas.getContext('2d', { alpha: false });
 let dataset = sampleData(), points = [], width = 0, height = 0, yaw = -.22, pitch = -.12, zoom = 1, mode = 'cloud';
 let dragging = false, previous = null, lastTime = 0, density = .65, softness = .5;
 let projectionWorker = null, projectionRun = 0, displayedMethod = 'pca';
+let currentPCA = null;
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 $('rotate').checked = !reducedMotion;
 
@@ -23,6 +25,8 @@ function analyze(candidate = dataset) {
   const result = pca(candidate.data, $('standardize').checked);
   projectionWorker?.terminate();projectionWorker=null;const run=++projectionRun;
   dataset = candidate;
+  currentPCA = result;
+  updateLearning(result, dataset, $('standardize').checked);
   const isTSNE=$('projection-method').value==='tsne';
   $('pca-options').hidden=isTSNE;$('pca-metrics').hidden=isTSNE;
   $('tsne-options').hidden=!isTSNE;$('tsne-metrics').hidden=!isTSNE;
@@ -188,4 +192,15 @@ async function loadKaggle(ref, filename) {
 $('kaggle-load').onclick=()=>loadKaggle(kaggleRef,$('kaggle-file').value);
 $('kaggle-demo').onclick=()=>{$('kaggle-url').value='https://www.kaggle.com/datasets/uciml/iris';$('kaggle-files').hidden=true;loadKaggle('uciml/iris','Iris.csv');};
 for(const id of ['sample','file','dropzone']) $(id).addEventListener(id==='file'?'change':id==='dropzone'?'drop':'click',()=>{dataRequest++;$('kaggle-source').hidden=true;},true);
+setupLearning((example, standardized) => {
+  dataRequest++;
+  $('kaggle-source').hidden = true;
+  $('projection-method').value = 'pca';
+  $('standardize').checked = standardized;
+  $('dataset-name').textContent = 'Four points · Assignment 2';
+  analyze(example);
+  $('point-mode').click();
+  $('reset').click();
+});
+$('learn').addEventListener('click', () => updateLearning(currentPCA, dataset, $('standardize').checked));
 window.addEventListener('resize',resize);analyze();resize();requestAnimationFrame(render);

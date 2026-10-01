@@ -36,6 +36,8 @@ A table gives you the numbers. PCA Cloud helps you explore how they fit together
 
 Use **Reset view** whenever you want to return to the starting camera position.
 
+In PCA mode, select **Understand this cloud** to explore the full scree plot, cumulative explained variance, and feature weights for each displayed component. The learning panel also walks through a four-point example: change the second feature’s units, toggle standardization, and see how PC1 and reconstruction change. Select **View these four points as a cloud** to explore that example in the main scene; **Use sample** restores the atmospheric data.
+
 ## Bring your own data  ⋆｡˚ ☁︎ ˚｡⋆
 
 ### Drop in a CSV

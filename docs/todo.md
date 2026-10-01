@@ -34,7 +34,7 @@ Based on the current working tree. Unchecked verification items mean “confirm 
 - [ ] **Feature selection:** let users exclude numeric IDs and choose measurement columns without editing the CSV first.
 - [ ] **Import preview:** show included/excluded columns, missing values, constant columns, and sampling decisions before analysis.
 - [ ] **Point details and colors:** preserve row identifiers and text labels, add hover/click inspection, and color by a chosen category or measurement with a legend.
-- [ ] **PCA interpretation:** show feature loadings and a scree plot so users can understand which variables drive each component.
+- [x] **PCA interpretation:** show feature loadings and a scree plot so users can understand which variables drive each component. Includes a four-point scaling and reconstruction walkthrough.
 - [ ] **2D view:** offer a flat projection alongside the current 3D view.
 - [ ] **Analysis exports:** download projected coordinates, PCA loadings, metrics, and run settings; retain source-row mapping through both sampling stages.
 - [ ] **Image export options:** include the dataset name, projection method, legend, and metrics, with a configurable image resolution.
