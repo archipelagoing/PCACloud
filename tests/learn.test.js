@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pca, prepareData } from '../src/pca.js';
-import { fourPointAnalysis, componentsForVariance, lessonGeometry } from '../src/learn.js';
+import { pca, prepareData } from '../assets/js/pca.js';
+import { fourPointAnalysis, componentsForVariance, lessonGeometry } from '../assets/js/learn.js';
 
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-10, `${a} ≠ ${b}`);
 

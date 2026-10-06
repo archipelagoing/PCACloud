@@ -22,12 +22,14 @@ jobs:
           node-version: '24'
       - name: Test PCA and CSV processing
         run: npm test
-      - name: Package static site
-        run: |
-          mkdir -p _site
-          cp index.html _site/
-          cp -R src styles assets _site/
-          touch _site/.nojekyll
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+      - name: Build Jekyll site
+        run: bundle exec jekyll build --trace
+        env:
+          JEKYLL_ENV: production
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

@@ -1,0 +1,10 @@
+---
+layout: default
+---
+<main class="content-shell">
+  <article class="content-card">
+    <h1>{{ page.title | escape }}</h1>
+    <p class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%B %-d, %Y' }}</time>{% if page.author %} · {{ page.author | escape }}{% endif %}</p>
+    {{ content }}
+  </article>
+</main>

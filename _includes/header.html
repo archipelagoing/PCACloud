@@ -1,0 +1,5 @@
+  <header>
+    <a class="brand" href="{{ "/" | relative_url }}" aria-label="{{ site.title | default: 'PCA Cloud' | escape }} home"><svg viewBox="0 0 40 28" fill="none"><path d="M10 24a8 8 0 0 1-1-16 11 11 0 0 1 21 2 7 7 0 0 1 0 14Z" stroke="currentColor" stroke-width="1.7"/><path d="M13 17h14M17 12v10M23 14v8" stroke="currentColor" stroke-width="1.3"/></svg>{{ site.brand_primary | default: "PCA" | escape }}<span>{{ site.brand_secondary | default: "Cloud" | escape }}</span></a>
+    <div class="header-note"><span class="live-dot"></span>{{ site.header_note | default: "A little perspective changes everything." | escape }}</div>
+    {% if page.layout == "home" %}<button id="export" class="glass-button">Save image <span>↗</span></button>{% endif %}
+  </header>

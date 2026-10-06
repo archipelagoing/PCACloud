@@ -1,0 +1,31 @@
+title: PCA Cloud
+description: Explore your data through interactive PCA and t-SNE clouds.
+url: "https://archipelagoing.github.io"
+baseurl: "/PCACloud"
+lang: en
+brand_primary: PCA
+brand_secondary: Cloud
+header_note: A little perspective changes everything.
+footer_note: A different way to see the bigger picture.
+# These two fields allow HTML, such as <br> for line breaks.
+headline: "Find the shape<br>in your data."
+intro: "Many dimensions. One sky.<br>Explore your data through principal component analysis."
+eyebrow: DATA, WITH ROOM TO BREATHE
+theme_color: "#6395b8"
+
+exclude:
+  - "*.gem"
+  - Gemfile
+  - Gemfile.lock
+  - jekyll-theme-pca-cloud.gemspec
+  - README.md
+  - LICENSE
+  - package.json
+  - tests
+  - docs
+  - src
+  - styles
+  - vendor
+  - node_modules
+  - PCACloud.code-workspace
+  - ArchisaBhattacharya_a2_submission.ipynb

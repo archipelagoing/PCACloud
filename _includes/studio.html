@@ -1,0 +1,51 @@
+  <main>
+    <section class="intro"><div class="eyebrow">{{ page.eyebrow | default: site.eyebrow | default: "DATA, WITH ROOM TO BREATHE" | escape }}</div><h1>{{ page.headline | default: site.headline | default: "Find the shape<br>in your data." }}</h1><p>{{ page.intro | default: site.intro | default: "Many dimensions. One sky.<br>Explore your data through principal component analysis." }}</p></section>
+    <aside id="studio-panel" class="panel" aria-label="Cloud controls">
+      <div class="panel-heading"><span>Cloud studio</span><span class="pill">LOCAL & PRIVATE</span></div>
+      <section class="control-section">
+        <div class="section-label"><span>01 / YOUR DATA</span><button id="sample" class="text-button">Use sample ↗</button></div>
+        <label class="upload" id="dropzone" for="file"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></svg><strong>Bring your own data</strong><span>Drop a CSV here or <u>browse files</u></span><small>Numeric columns · up to 5 MB</small></label>
+        <input type="file" id="file" accept=".csv,text/csv" hidden>
+        <details class="kaggle-import">
+          <summary>Import from Kaggle <span>↗</span></summary>
+          <form id="kaggle-form">
+            <label for="kaggle-url">Public dataset link</label>
+            <input id="kaggle-url" type="text" placeholder="kaggle.com/datasets/owner/name" required>
+            <div class="kaggle-actions"><button type="submit" id="kaggle-find">Find CSVs</button><button type="button" id="kaggle-demo">Try Iris dataset</button></div>
+          </form>
+          <div id="kaggle-files" hidden><label for="kaggle-file">CSV file · up to 5 MB</label><select id="kaggle-file"></select><button type="button" id="kaggle-load">Visualize dataset</button></div>
+          <p id="kaggle-status" role="status" aria-live="polite">Load public CSVs directly from Kaggle. No API key needed.</p>
+          <a id="kaggle-source" hidden target="_blank" rel="noopener noreferrer">View source on Kaggle ↗</a>
+        </details>
+        <div class="dataset"><span class="file-icon">▤</span><div><strong id="dataset-name">Atmospheric observations</strong><small id="dataset-info">Preparing your sky…</small></div><span class="loaded-dot"></span></div>
+        <p id="message" role="status" aria-live="polite"></p>
+      </section>
+      <section class="control-section">
+        <div class="section-label"><span>02 / PROJECTION</span><span class="tiny">3 components</span></div>
+        <label class="projection-label" for="projection-method">Method</label>
+        <select id="projection-method" class="projection-select"><option value="pca">PCA · linear projection</option><option value="tsne">t-SNE · local neighborhoods</option></select>
+        <div id="pca-options"><label class="projection-label" for="pca-objective">PCA objective</label><select id="pca-objective" class="projection-select"><option value="variance">Maximize variance</option><option value="reconstruction">Minimize reconstruction error</option></select><p class="projection-note">Both objectives give the same PCA projection. Choose which metric to emphasize.</p></div>
+        <div id="tsne-options" hidden><label class="projection-label" for="perplexity">Perplexity</label><input id="perplexity" class="projection-select" type="number" min="1" max="50" value="30" step="1"><p class="projection-note">Balances smaller and larger neighborhoods. Uses up to 500 evenly sampled rows and a fixed seed.</p><button id="rerun-tsne" class="text-button">Run again ↻</button></div>
+        <label class="toggle-row" for="standardize"><span>Standardize features<small>Scale nonconstant features to unit variance</small></span><input type="checkbox" id="standardize" checked><span class="switch"></span></label>
+        <div id="pca-metrics">
+        <div class="variance-title"><span>Explained variance</span><strong id="total-variance">—</strong></div>
+        <div class="variance-bar" aria-label="Explained variance by component"><i id="bar-0"></i><i id="bar-1"></i><i id="bar-2"></i></div>
+        <div class="variance-legend"><span><i></i>PC1 <b id="pc-0">—</b></span><span><i></i>PC2 <b id="pc-1">—</b></span><span><i></i>PC3 <b id="pc-2">—</b></span></div>
+        <div id="reconstruction-metric" hidden><div class="variance-title"><span>Relative squared error</span><strong id="reconstruction-value">—</strong></div><p class="projection-note">Fraction of centered data energy lost in 3D; lower is better. Measured after optional standardization.</p></div>
+        </div>
+        <div id="tsne-metrics" hidden><div class="variance-title"><span>KL divergence</span><strong id="tsne-kl">—</strong></div><p class="projection-note">Preserves local similarities, not global distances or variance. Axes have no feature meaning.</p></div>
+        <p id="projection-status" class="projection-note" role="status" aria-live="polite"></p>
+      </section>
+      <section class="control-section appearance">
+        <div class="section-label"><span>03 / ATMOSPHERE</span><span>☼</span></div>
+        <div class="segmented" aria-label="Render mode"><button id="cloud-mode" class="active" aria-pressed="true">Cloud</button><button id="point-mode" aria-pressed="false">Data points</button></div>
+        <label class="slider-label" for="density">Cloud density<output id="density-value">65%</output></label><input id="density" type="range" min="10" max="100" value="65">
+        <label class="slider-label" for="softness">Particle size<output id="softness-value">50%</output></label><input id="softness" type="range" min="10" max="100" value="50">
+        <div class="motion-row"><label for="rotate"><input id="rotate" type="checkbox" checked>Slow rotation</label><button id="reset" class="text-button">Reset view ↺</button></div>
+      </section>
+      <div class="panel-footer"><span>⌁</span> Your data stays in your browser.</div>
+    </aside>
+    <div class="cloud-caption"><span class="caption-line"></span><span>EVERY POINT, A PART OF THE PICTURE</span></div>
+    <div class="view-tools"><button id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-value">100%</span><button id="zoom-in" aria-label="Zoom in">+</button></div>
+    <div class="interaction-hint"><span>↔</span> Drag to orbit <i>·</i> Scroll to explore</div>
+  </main>

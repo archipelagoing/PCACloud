@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="{{ site.lang | default: 'en' | escape }}">
+<head>
+{% include head.html %}
+</head>
+<body{% unless page.layout == 'home' %} class="content-page"{% endunless %}>
+{% if page.layout == 'home' %}
+  <canvas id="sky" aria-label="Interactive three-dimensional PCA cloud. Drag to rotate and scroll to zoom."></canvas>
+{% endif %}
+{% include header.html %}
+{{ content }}
+{% include footer.html %}
+{% if page.layout == 'home' %}
+{% include learning.html %}
+  <script type="module" src="{{ '/assets/js/app.js' | relative_url }}"></script>
+{% endif %}
+</body>
+</html>

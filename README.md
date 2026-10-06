@@ -90,23 +90,23 @@ The page loads fonts from Google Fonts, with system-font fallbacks. If you use t
 
 ## For contributors ⋆｡˚ ☁︎ ˚｡⋆
 
-Built with vanilla JavaScript and Canvas 2D, with no build step or runtime package dependencies. See the [roadmap](docs/todo.md) for fixes, release checks, and ideas for future features.
+Built with vanilla JavaScript and Canvas 2D, packaged as a reusable Jekyll theme. The app has no JavaScript runtime package dependencies. See the [roadmap](docs/todo.md) for fixes, release checks, and ideas for future features.
 
 <details>
 <summary><strong>Project structure</strong></summary>
 
 ```text
 PCACloud/
-├── index.html       # Site entry point
-├── src/             # App, projections, Kaggle import, and worker
-├── styles/          # Site stylesheet
-├── assets/          # Site images and favicon
-├── tests/           # Automated tests
+├── index.html       # Home page front matter
+├── _config.yml      # Site URLs, branding, and intro text
+├── _layouts/        # default, home, page, and post layouts
+├── _includes/       # Head, header, footer, studio, and learning drawer
+├── assets/          # JavaScript modules, stylesheet, image, and favicon
+├── tests/           # Automated projection and importer tests
 ├── docs/            # Projection guide, roadmap, and screenshot
-├── .github/         # GitHub Pages deployment workflow
-├── package.json     # Local server and test commands
-├── README.md
-└── LICENSE
+├── Gemfile          # Jekyll development dependencies
+├── jekyll-theme-pca-cloud.gemspec
+└── .github/         # Jekyll GitHub Pages deployment workflow
 ```
 
 </details>
@@ -116,13 +116,14 @@ PCACloud/
 
 ### Run locally
 
-With Node.js/npm and Python 3 installed:
+With Ruby 3.1 or newer, Bundler, and Node.js/npm installed:
 
 ```sh
+bundle install
 npm start
 ```
 
-Open [localhost:5173](http://localhost:5173). No dependency installation is needed. Any static web server can also serve the directory.
+Open [localhost:5173](http://localhost:5173). Jekyll renders the layouts and Liquid templates. `npm start` serves at the domain root for local development. Run `npm run build` to generate `_site/` using the configured `/PCACloud` base path. Any static web server can serve the generated `_site/` directory.
 
 ### Run tests
 
@@ -136,9 +137,56 @@ Tests use Node's built-in test runner and cover PCA variance, component orthogon
 
 In [repository Settings → Pages](https://github.com/archipelagoing/PCACloud/settings/pages), select **GitHub Actions** as the deployment source.
 
-The included [workflow](.github/workflows/pages.yml) runs tests and publishes the static site on every push to `main`. You can also start it manually from the repository's **Actions** tab. Relative asset paths support the `/PCACloud/` project path.
+The included [workflow](.github/workflows/pages.yml) runs tests, builds Jekyll, and publishes `_site/` on every push to `main`. You can also start it manually from the repository's **Actions** tab. Jekyll’s `relative_url` filter supports the `/PCACloud/` project path. Set `url` and `baseurl` in `_config.yml` for your own domain or repository (`baseurl: ""` for a domain root).
 
 </details>
+
+## Use as a Jekyll theme
+
+The theme follows [Jekyll’s theme structure](https://jekyllrb.com/docs/themes/) and can be used from a checkout, as a gem, or as a remote theme.
+
+To use this checkout directly, run the local commands above. Edit `_config.yml` to change branding, the header/footer notes, and the home page introduction. `headline` and `intro` accept HTML; other text settings are escaped. Per-page `headline`, `intro`, and `eyebrow` override the site settings. Keep the studio’s element IDs when customizing its HTML because the interactive app uses them.
+
+To use it in another Jekyll site without publishing a gem, add this to that site’s Gemfile:
+
+```ruby
+gem "jekyll", "~> 4.4"
+gem "jekyll-theme-pca-cloud", git: "https://github.com/archipelagoing/PCACloud", branch: "main"
+```
+
+After these changes are pushed to that branch, run `bundle install` and set:
+
+```yaml
+theme: jekyll-theme-pca-cloud
+title: PCA Cloud
+```
+
+Alternatively, add `gem "jekyll-remote-theme"` to the consuming site’s Gemfile and configure:
+
+```yaml
+remote_theme: archipelagoing/PCACloud
+plugins:
+  - jekyll-remote-theme
+```
+
+Remote theme usage also requires these files to be pushed first. When using either method, create your own `index.html`:
+
+```yaml
+---
+layout: home
+title: Find the shape in your data
+---
+```
+
+Use `layout: page` for ordinary Markdown pages and `layout: post` for dated posts. Those layouts share the sky colors and glass cards; the interactive studio loads on `layout: home` pages. Theme installation supplies layouts and assets, so the consuming site provides its own content and `_config.yml`. Copy a file into your own `_includes/` or `_layouts/` directory to override it.
+
+To package the theme locally:
+
+```sh
+gem build jekyll-theme-pca-cloud.gemspec
+```
+
+This creates `jekyll-theme-pca-cloud-0.1.0.gem`; publishing it to RubyGems is a separate step.
 
 Licensed under [Apache License 2.0](LICENSE).
 
